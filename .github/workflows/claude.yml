@@ -1,0 +1,218 @@
+name: Claude Code
+
+# Runs the Claude Code CLI (via anthropics/claude-code-action) inside Claude
+# Code's OS-level Bash sandbox on an ephemeral GitHub-hosted runner.
+#
+#   implement      Issue labeled `claude`, or `@claude` in an issue / comment /
+#                  review comment -> Claude works on a `claude/...` branch and
+#                  opens (or updates) a pull request.
+#   address-review A review submitted on a Claude PR (`claude/...` head branch)
+#                  that requests changes or mentions @claude -> Claude applies
+#                  the review feedback, pushes to the PR branch and replies.
+#
+# Setup: see docs/claude-automation.md.
+
+on:
+  issues:
+    types: [opened, labeled]
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+  pull_request_review:
+    types: [submitted]
+
+env:
+  # Claude Code settings, written to the runner's user-level settings by the
+  # action (a trusted scope, so `strictAllowlist` is honored). Kept inline in
+  # the workflow rather than in a repo file so a branch Claude pushes cannot
+  # loosen its own sandbox (the GitHub App token cannot edit workflows).
+  CLAUDE_SANDBOX_SETTINGS: |
+    {
+      "sandbox": {
+        "enabled": true,
+        "failIfUnavailable": true,
+        "autoAllowBashIfSandboxed": true,
+        "allowUnsandboxedCommands": false,
+        "network": {
+          "strictAllowlist": true,
+          "allowedDomains": [
+            "github.com",
+            "api.github.com",
+            "*.githubusercontent.com",
+            "registry.npmjs.org",
+            "pypi.org",
+            "files.pythonhosted.org",
+            "proxy.golang.org",
+            "sum.golang.org",
+            "crates.io",
+            "static.crates.io",
+            "index.crates.io"
+          ]
+        },
+        "filesystem": {
+          "allowWrite": ["~/.cache", "~/.npm", "~/.config/gh", "~/.local/state/gh"],
+          "denyRead": ["~/.ssh", "~/.aws", "~/.docker", "~/.kube"]
+        },
+        "credentials": {
+          "envVars": [
+            { "name": "ANTHROPIC_API_KEY", "mode": "deny" },
+            { "name": "CLAUDE_CODE_OAUTH_TOKEN", "mode": "deny" },
+            { "name": "OVERRIDE_GITHUB_TOKEN", "mode": "deny" },
+            { "name": "DEFAULT_WORKFLOW_TOKEN", "mode": "deny" },
+            { "name": "ACTIONS_ID_TOKEN_REQUEST_TOKEN", "mode": "deny" },
+            { "name": "ACTIONS_ID_TOKEN_REQUEST_URL", "mode": "deny" },
+            { "name": "ACTIONS_RUNTIME_TOKEN", "mode": "deny" }
+          ]
+        }
+      },
+      "permissions": {
+        "deny": [
+          "Edit(./.github/workflows/**)",
+          "Read(./.env)",
+          "Read(./.env.*)"
+        ]
+      }
+    }
+
+jobs:
+  implement:
+    # Skip events that obviously aren't for Claude so no runner is spun up.
+    # Reviews on Claude's own PRs are handled by `address-review` below.
+    if: |
+      (github.event_name == 'issues' && (
+        github.event.label.name == 'claude' ||
+        (github.event.action == 'opened' && contains(github.event.issue.body, '@claude') &&
+          !contains(github.event.issue.labels.*.name, 'claude'))
+      )) ||
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
+      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
+      (github.event_name == 'pull_request_review' &&
+        contains(github.event.review.body, '@claude') &&
+        !startsWith(github.event.pull_request.head.ref, 'claude/'))
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 60
+    concurrency:
+      group: claude-${{ github.event.issue.number || github.event.pull_request.number }}
+      cancel-in-progress: false
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write # OIDC exchange for the Claude GitHub App token
+      actions: read # lets Claude read CI results on PRs
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: ./.github/actions/setup-claude-sandbox
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          # Or, with a Claude Pro/Max subscription:
+          # claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          label_trigger: claude
+          track_progress: true
+          settings: ${{ env.CLAUDE_SANDBOX_SETTINGS }}
+          additional_permissions: |
+            actions: read
+          claude_args: |
+            --allowedTools "Bash(gh pr create:*),Bash(gh pr view:*),Bash(gh pr list:*),Bash(gh issue view:*)"
+          prompt: |
+            All shell commands run inside an OS sandbox: network access is
+            limited to GitHub and package registries, and writes are limited
+            to the repository and temp directories. Do not try to bypass it;
+            if something genuinely cannot work in the sandbox, say so in your
+            tracking comment.
+
+            Follow CLAUDE.md. Before committing, run whatever build, lint and
+            test commands the repository defines and make sure they pass.
+
+            When you are working on an issue (not a pull request) and you
+            changed code:
+              1. Commit and push your branch.
+              2. Open a pull request into the base branch with
+                 `gh pr create --base <base branch> --head <your branch>`.
+                 Use a conventional-commit style title, and a body that
+                 summarizes the change, lists how it was verified, and ends
+                 with `Closes #${{ github.event.issue.number }}`.
+              3. Put the pull request link in your tracking comment.
+            If a pull request for your branch already exists, push to it
+            instead of opening another one.
+
+  address-review:
+    # A review on one of Claude's own PRs that requests changes or mentions
+    # @claude. Same-repo branches only: never run with secrets on fork code.
+    if: |
+      github.event_name == 'pull_request_review' &&
+      startsWith(github.event.pull_request.head.ref, 'claude/') &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      (github.event.review.state == 'changes_requested' || contains(github.event.review.body, '@claude'))
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 60
+    concurrency:
+      group: claude-${{ github.event.pull_request.number }}
+      cancel-in-progress: false
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - uses: ./.github/actions/setup-claude-sandbox
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          # claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          settings: ${{ env.CLAUDE_SANDBOX_SETTINGS }}
+          additional_permissions: |
+            actions: read
+          claude_args: |
+            --permission-mode acceptEdits
+            --allowedTools "Read,Glob,Grep,Edit,Write,Bash(git:*),Bash(gh pr:*),Bash(gh api repos/${{ github.repository }}/pulls:*)"
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+            PR BRANCH: ${{ github.event.pull_request.head.ref }}
+            BASE BRANCH: ${{ github.event.pull_request.base.ref }}
+            REVIEW ID: ${{ github.event.review.id }}
+            REVIEWER: ${{ github.event.review.user.login }}
+
+            You authored this pull request. The reviewer above just submitted
+            a review on it. Address that review's feedback.
+
+            All shell commands run inside an OS sandbox: network access is
+            limited to GitHub and package registries, and writes are limited
+            to the repository and temp directories. Do not try to bypass it.
+
+            1. Read the feedback:
+               - Review summary and state:
+                 `gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews/${{ github.event.review.id }}`
+               - Its inline comments:
+                 `gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews/${{ github.event.review.id }}/comments`
+               - PR context: `gh pr view ${{ github.event.pull_request.number }} --comments`
+                 and `git diff origin/${{ github.event.pull_request.base.ref }}...HEAD`
+            2. Make the requested changes, following CLAUDE.md. If a comment
+               is unclear or you disagree with it, don't guess: explain why in
+               your reply instead of changing code.
+            3. Run the repository's build, lint and test commands, if any,
+               and make sure they pass.
+            4. Commit with a descriptive message and push:
+               `git push origin HEAD:${{ github.event.pull_request.head.ref }}`.
+               Never force-push or rewrite history. Don't pass `-u` (the
+               sandbox makes `.git/config` read-only).
+            5. Reply to each inline comment you handled:
+               `gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments/<comment id>/replies -f body='...'`
+               saying what you changed (with the commit SHA) or why you didn't.
+            6. Post one summary comment with `gh pr comment ${{ github.event.pull_request.number }} --body '...'`
+               mentioning @${{ github.event.review.user.login }} and asking
+               for a re-review.
