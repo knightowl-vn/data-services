@@ -2,7 +2,7 @@ name: postgres
 category: databases
 owner: "@knightowl-vn/platform-db"
 layer: 2
-description: Shared PostgreSQL cluster. Apps get their own database and role through PostgresTenant.
+description: Shared PostgreSQL cluster. Products get their own database and role through PostgresTenant.
 depends_on:
   - platform/runtime/cluster
 # Stack outputs other projects may read (the contract):

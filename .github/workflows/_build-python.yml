@@ -4,7 +4,7 @@ name: build-python
 on:
   workflow_call:
     inputs:
-      path: {type: string, required: true, description: "Component folder, e.g. apps/x/backend"}
+      path: {type: string, required: true, description: "Component folder, e.g. products/x/api"}
       image: {type: string, required: true, description: "Image name without tag"}
       python-version: {type: string, default: "3.13"}
       push: {type: boolean, default: false}

@@ -8,10 +8,10 @@
 /platform/observability/        @knightowl-vn/platform-observability
 /platform/security-compliance/  @knightowl-vn/security
 
-# Shared code: platform team reviews changes that affect every app
+# Shared code: platform team reviews changes that affect every product
 /libs/                          @knightowl-vn/platform
 /.github/workflows/_*.yml       @knightowl-vn/platform
 
-# Apps: each team owns its app folder and its pipeline
-/apps/data-quality/                         @knightowl-vn/data-quality
-/.github/workflows/app-data-quality.yml     @knightowl-vn/data-quality
+# Products: each team owns its product folder and its pipeline
+/products/data-quality/                         @knightowl-vn/data-quality
+/.github/workflows/product-data-quality.yml     @knightowl-vn/data-quality

@@ -1,6 +1,6 @@
 # platform/
 
-Shared infrastructure, run once and used by every app. Grouped by
+Shared infrastructure, run once and used by every product. Grouped by
 CNCF-style category: `platform/<category>/<tool>/`.
 
 Each tool folder has the same layout:

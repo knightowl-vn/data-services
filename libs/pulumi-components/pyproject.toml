@@ -1,7 +1,7 @@
 [project]
 name = "knightowl-components"
 version = "0.1.0"
-description = "Shared Pulumi components: how apps get tenants on platform services."
+description = "Shared Pulumi components: how products get tenants on platform services."
 requires-python = ">=3.11"
 dependencies = [
   "pulumi>=3.0.0,<4.0.0",

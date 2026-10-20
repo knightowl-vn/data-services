@@ -1,0 +1,114 @@
+# Pipeline for products/data-quality. For a new product, copy this file and
+# replace "data-quality" (see templates/product/README.md).
+name: product-data-quality
+
+on:
+  push:
+    branches: [main]
+    paths: ["products/data-quality/**", "libs/pulumi-components/**", ".github/workflows/product-data-quality.yml"]
+  pull_request:
+    branches: [main]
+    paths: ["products/data-quality/**", "libs/pulumi-components/**", ".github/workflows/product-data-quality.yml"]
+  workflow_dispatch:
+
+permissions: {contents: read}
+
+env:
+  PRODUCT: products/data-quality
+
+jobs:
+  # Work out which components changed, so only those run.
+  changes:
+    runs-on: ubuntu-24.04-arm
+    permissions: {contents: read, pull-requests: read}
+    outputs:
+      api: ${{ steps.f.outputs.api }}
+      web: ${{ steps.f.outputs.web }}
+      infra: ${{ steps.f.outputs.infra }}
+      deploy: ${{ steps.f.outputs.deploy }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: f
+        with:
+          filters: |
+            api:    ["products/data-quality/api/**"]
+            web:    ["products/data-quality/web/**", "products/data-quality/api/openapi.json"]
+            infra:  ["products/data-quality/infra/**", "libs/pulumi-components/**"]
+            deploy: ["products/data-quality/deploy/**"]
+
+  # openapi.json must match the code; public APIs must not break callers.
+  api-contract:
+    needs: changes
+    if: needs.changes.outputs.api == 'true'
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.13"}
+      - run: pip install -e "$PRODUCT/api"
+      - name: openapi.json matches the code
+        run: make -C "$PRODUCT" api-check
+      - uses: actions/setup-go@v5
+        with: {go-version: stable, cache: false}
+      - name: No breaking changes (public APIs only)
+        run: |
+          if ! grep -q 'visibility: public' "$PRODUCT/product.yaml"; then
+            echo "API is internal; skipping breaking-change check."; exit 0
+          fi
+          base="origin/${GITHUB_BASE_REF:-main}"
+          if [ "$GITHUB_EVENT_NAME" = push ]; then base="${{ github.event.before }}"; fi
+          if ! git show "$base:$PRODUCT/api/openapi.json" > /tmp/base.json 2>/dev/null; then
+            echo "No contract on $base yet; skipping."; exit 0
+          fi
+          go install github.com/oasdiff/oasdiff@v1.33.0
+          "$(go env GOPATH)/bin/oasdiff" breaking /tmp/base.json "$PRODUCT/api/openapi.json" --fail-on ERR
+
+  api:
+    needs: changes
+    if: needs.changes.outputs.api == 'true'
+    permissions: {contents: read, packages: write}
+    uses: ./.github/workflows/_build-python.yml
+    with:
+      path: products/data-quality/api
+      image: ghcr.io/knightowl-vn/data-quality-api
+      push: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
+
+  web:
+    needs: changes
+    if: needs.changes.outputs.web == 'true'
+    permissions: {contents: read, packages: write}
+    uses: ./.github/workflows/_build-node.yml
+    with:
+      path: products/data-quality/web
+      image: ghcr.io/knightowl-vn/data-quality-web
+      push: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
+
+  infra:
+    needs: changes
+    if: needs.changes.outputs.infra == 'true'
+    permissions: {contents: read, pull-requests: write}
+    uses: ./.github/workflows/_pulumi.yml
+    with:
+      path: products/data-quality/infra
+      stack: knightowl/data-quality/dev
+      command: ${{ github.event_name == 'pull_request' && 'preview' || 'up' }}
+    secrets:
+      PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+
+  # PRs: validate manifests only. main: also bump image tags for dev.
+  # Staging/prod: promote by copying the tag in a PR (or add jobs with environments).
+  deploy-dev:
+    needs: [changes, api-contract, api, web, infra]
+    if: >-
+      always() && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') &&
+      (needs.api.result == 'success' || needs.web.result == 'success' ||
+       needs.changes.outputs.deploy == 'true')
+    permissions: {contents: write}
+    uses: ./.github/workflows/_deploy.yml
+    with:
+      overlay: products/data-quality/deploy/overlays/dev
+      images: >-
+        ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && needs.api.result == 'success' && format('ghcr.io/knightowl-vn/data-quality-api:{0}', github.sha) || '' }}
+        ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && needs.web.result == 'success' && format('ghcr.io/knightowl-vn/data-quality-web:{0}', github.sha) || '' }}

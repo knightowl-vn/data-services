@@ -5,7 +5,7 @@ name: deploy
 on:
   workflow_call:
     inputs:
-      overlay: {type: string, required: true, description: "e.g. apps/x/deploy/overlays/dev"}
+      overlay: {type: string, required: true, description: "e.g. products/x/deploy/overlays/dev"}
       images: {type: string, default: "", description: "Space-separated name:tag list"}
 
 jobs:

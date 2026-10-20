@@ -2,14 +2,14 @@
 
 Shared PostgreSQL cluster run by the database team.
 
-## Using it from an app
+## Using it from a product
 
-Apps never change this folder. They read this stack's outputs and create
+Products never change this folder. They read this stack's outputs and create
 their own tenant with `PostgresTenant` from `libs/pulumi-components`:
 
 ```python
 pg = pulumi.StackReference(f"{org}/postgres/{env}")
-PostgresTenant("my-app", host=pg.get_output("host"), ...)
+PostgresTenant("my-product", host=pg.get_output("host"), ...)
 ```
 
 ## Outputs (contract)
