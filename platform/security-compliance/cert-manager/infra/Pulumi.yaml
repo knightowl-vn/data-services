@@ -1,0 +1,7 @@
+name: cert-manager
+description: cert-manager for the shared cluster
+runtime:
+  name: python
+  options:
+    toolchain: pip
+    virtualenv: venv

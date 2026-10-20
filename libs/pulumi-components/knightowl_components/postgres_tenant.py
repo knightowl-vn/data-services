@@ -10,6 +10,9 @@ class PostgresTenant(pulumi.ComponentResource):
     """Creates ``database`` owned by a new login role, and writes the
     connection string to a k8s Secret named ``<database>-db`` in ``namespace``
     (underscores become dashes, e.g. ``data_quality`` -> ``data-quality-db``).
+
+    ``host`` is where Pulumi connects as admin (the primary). ``app_host`` is
+    what the app connects to, usually the pooler; defaults to ``host``.
     """
 
     def __init__(
@@ -21,6 +24,8 @@ class PostgresTenant(pulumi.ComponentResource):
         port: pulumi.Input[int],
         admin_user: pulumi.Input[str],
         admin_password: pulumi.Input[str],
+        app_host: pulumi.Input[str] | None = None,
+        sslmode: str = "require",
         opts: pulumi.ResourceOptions | None = None,
     ):
         super().__init__("knightowl:platform:PostgresTenant", name, None, opts)
@@ -31,7 +36,7 @@ class PostgresTenant(pulumi.ComponentResource):
             port=port,
             username=admin_user,
             password=admin_password,
-            sslmode="disable",  # TODO: require TLS once the cluster has certs
+            sslmode=sslmode,  # CloudNativePG serves TLS by default
             opts=pulumi.ResourceOptions(parent=self),
         )
         pg = pulumi.ResourceOptions(parent=self, provider=provider)
@@ -52,7 +57,13 @@ class PostgresTenant(pulumi.ComponentResource):
         db = postgresql.Database(f"{name}-db", name=database, owner=role.name, opts=pg)
 
         url = pulumi.Output.format(
-            "postgresql://{0}:{1}@{2}:{3}/{4}", role.name, password.result, host, port, db.name
+            "postgresql://{0}:{1}@{2}:{3}/{4}?sslmode={5}",
+            role.name,
+            password.result,
+            app_host or host,
+            port,
+            db.name,
+            sslmode,
         )
         self.secret = k8s.core.v1.Secret(
             f"{name}-db-secret",

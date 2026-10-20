@@ -1,0 +1,12 @@
+name: cnpg-operator
+category: databases
+owner: "@knightowl-vn/platform-db"
+layer: 2
+description: CloudNativePG operator and Barman Cloud backup plugin. Runs Postgres clusters on Kubernetes.
+depends_on:
+  - platform/runtime/cluster
+  - platform/security-compliance/cert-manager   # needed by the backup plugin
+outputs:
+  - namespace
+  - operator_version
+  - backup_plugin   # plugin name used in Cluster.spec.plugins

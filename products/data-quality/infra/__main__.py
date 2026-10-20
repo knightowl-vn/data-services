@@ -33,6 +33,7 @@ db = PostgresTenant(
     port=pg.get_output("port"),
     admin_user=pg.get_output("admin_user"),
     admin_password=pg.get_output("admin_password"),
+    app_host=pg.get_output("app_host"),  # via the PgBouncer pooler
 )
 
 pulumi.export("namespace", ns.name)

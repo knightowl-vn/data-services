@@ -1,0 +1,7 @@
+name: cnpg-operator
+description: CloudNativePG operator and Barman Cloud plugin
+runtime:
+  name: python
+  options:
+    toolchain: pip
+    virtualenv: venv
