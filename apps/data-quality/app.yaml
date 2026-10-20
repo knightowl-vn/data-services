@@ -1,0 +1,14 @@
+name: data-quality
+description: Define data quality checks on datasets and run them.
+team: "@knightowl-vn/data-quality"
+components:
+  frontend:
+    path: frontend
+    image: ghcr.io/knightowl-vn/data-quality-frontend
+  backend:
+    path: backend
+    image: ghcr.io/knightowl-vn/data-quality-backend
+# Platform services this app uses. Their stacks must exist before this app's stack runs.
+depends_on:
+  - platform/databases/postgres
+environments: [dev, staging, prod]

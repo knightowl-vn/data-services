@@ -1,0 +1,4 @@
+config:
+  postgres:namespace: platform-postgres
+  postgres:storageSize: 50Gi
+  # Set with: pulumi config set --secret postgres:adminPassword <value>

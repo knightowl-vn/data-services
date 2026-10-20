@@ -1,0 +1,7 @@
+name: postgres
+description: Shared PostgreSQL cluster
+runtime:
+  name: python
+  options:
+    toolchain: pip
+    virtualenv: venv

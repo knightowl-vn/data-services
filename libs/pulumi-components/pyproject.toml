@@ -1,0 +1,18 @@
+[project]
+name = "knightowl-components"
+version = "0.1.0"
+description = "Shared Pulumi components: how apps get tenants on platform services."
+requires-python = ">=3.11"
+dependencies = [
+  "pulumi>=3.0.0,<4.0.0",
+  "pulumi-kubernetes>=4.0.0,<5.0.0",
+  "pulumi-postgresql>=3.0.0,<4.0.0",
+  "pulumi-random>=4.0.0,<5.0.0",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["knightowl_components"]

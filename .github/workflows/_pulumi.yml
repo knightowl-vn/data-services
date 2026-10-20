@@ -1,0 +1,33 @@
+# Reusable: `pulumi preview` on PRs, `pulumi up` on main.
+# Runs only when the repo variable PULUMI_ENABLED is "true" and the
+# PULUMI_ACCESS_TOKEN secret is set (plus cloud/k8s credentials for your backend).
+name: pulumi
+
+on:
+  workflow_call:
+    inputs:
+      path: {type: string, required: true, description: "Pulumi project folder"}
+      stack: {type: string, required: true, description: "org/project/stack"}
+      command: {type: string, default: preview, description: "preview | up"}
+    secrets:
+      PULUMI_ACCESS_TOKEN: {required: false}
+
+jobs:
+  pulumi:
+    if: vars.PULUMI_ENABLED == 'true'
+    runs-on: ubuntu-24.04-arm
+    permissions: {contents: read, pull-requests: write}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.13"}
+      - run: python -m venv venv && venv/bin/pip install -r requirements.txt
+        working-directory: "${{ inputs.path }}"
+      - uses: pulumi/actions@v6
+        with:
+          command: "${{ inputs.command }}"
+          stack-name: "${{ inputs.stack }}"
+          work-dir: "${{ inputs.path }}"
+          comment-on-pr: true
+        env:
+          PULUMI_ACCESS_TOKEN: "${{ secrets.PULUMI_ACCESS_TOKEN }}"

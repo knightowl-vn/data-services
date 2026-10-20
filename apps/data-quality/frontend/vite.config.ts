@@ -1,0 +1,11 @@
+import react from "@vitejs/plugin-react";
+import { defineConfig } from "vitest/config";
+
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    // Local dev: forward API calls to the backend on :8000.
+    proxy: { "/api": "http://localhost:8000" },
+  },
+  test: { environment: "node" },
+});

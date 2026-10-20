@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: data-quality-backend
+  labels: {app.kubernetes.io/name: data-quality, app.kubernetes.io/component: backend}
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app.kubernetes.io/name: data-quality, app.kubernetes.io/component: backend}
+  template:
+    metadata:
+      labels: {app.kubernetes.io/name: data-quality, app.kubernetes.io/component: backend}
+    spec:
+      serviceAccountName: data-quality   # created by AppNamespace (infra/)
+      securityContext: {runAsNonRoot: true, runAsUser: 1000}
+      containers:
+        - name: backend
+          image: ghcr.io/knightowl-vn/data-quality-backend
+          ports: [{containerPort: 8000}]
+          envFrom:
+            - secretRef: {name: data-quality-db, optional: true}   # DATABASE_URL from PostgresTenant
+          readinessProbe: {httpGet: {path: /health, port: 8000}}
+          livenessProbe: {httpGet: {path: /health, port: 8000}}
+          resources:
+            requests: {cpu: 100m, memory: 128Mi}
+            limits: {cpu: 500m, memory: 512Mi}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: data-quality-backend
+spec:
+  selector: {app.kubernetes.io/name: data-quality, app.kubernetes.io/component: backend}
+  ports: [{port: 8000, targetPort: 8000}]

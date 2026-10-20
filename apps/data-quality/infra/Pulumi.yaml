@@ -1,0 +1,7 @@
+name: data-quality
+description: Infra for the data quality app (namespace, Postgres tenant)
+runtime:
+  name: python
+  options:
+    toolchain: pip
+    virtualenv: venv
