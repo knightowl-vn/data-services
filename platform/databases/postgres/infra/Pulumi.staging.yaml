@@ -1,0 +1,18 @@
+config:
+  postgres:namespace: platform-postgres
+  postgres:clusterName: main
+  postgres:image: ghcr.io/cloudnative-pg/postgresql:18
+  postgres:instances: 2
+  postgres:storageSize: 50Gi
+  postgres:walStorageSize: 10Gi
+  postgres:cpu: "1"
+  postgres:memory: 2Gi
+  postgres:poolerInstances: 2
+  postgres:parameters:
+    max_connections: "200"
+    shared_buffers: 512MB
+  postgres:backup:
+    destination_path: s3://knightowl-pg-backups/staging
+    retention: 7d
+  # pulumi config set --secret postgres:backupAccessKeyId <value>
+  # pulumi config set --secret postgres:backupSecretAccessKey <value>

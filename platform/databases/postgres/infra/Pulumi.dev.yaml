@@ -1,0 +1,13 @@
+config:
+  postgres:namespace: platform-postgres
+  postgres:clusterName: main
+  postgres:image: ghcr.io/cloudnative-pg/postgresql:18
+  postgres:instances: 1
+  postgres:storageSize: 20Gi
+  postgres:cpu: 250m
+  postgres:memory: 1Gi
+  postgres:poolerInstances: 1
+  postgres:parameters:
+    max_connections: "100"
+    shared_buffers: 256MB
+  # No backups in dev.

@@ -1,0 +1,23 @@
+name: data-quality
+description: Define data quality checks on datasets and run them.
+team: "@knightowl-vn/data-quality"
+
+components:
+  web:
+    path: web
+    image: ghcr.io/knightowl-vn/data-quality-web
+  api:
+    path: api
+    image: ghcr.io/knightowl-vn/data-quality-api
+    # public: other products may call it. CI blocks breaking changes to the
+    #         contract; paths are versioned (/api/v1).
+    # internal: only this product's web calls it; change freely.
+    visibility: public
+    contract: api/openapi.json
+    version: v1
+
+# Platform services this product uses. Their stacks must exist first.
+depends_on:
+  - platform/databases/postgres
+
+environments: [dev, staging, prod]

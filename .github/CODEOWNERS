@@ -1,0 +1,17 @@
+# Last match wins. Team names are placeholders: create these teams in GitHub
+# (or replace with usernames) before turning on "Require review from Code Owners".
+
+*                               @knightowl-vn/platform
+
+# Platform: one owner per category
+/platform/databases/            @knightowl-vn/platform-db
+/platform/observability/        @knightowl-vn/platform-observability
+/platform/security-compliance/  @knightowl-vn/security
+
+# Shared code: platform team reviews changes that affect every product
+/libs/                          @knightowl-vn/platform
+/.github/workflows/_*.yml       @knightowl-vn/platform
+
+# Products: each team owns its product folder and its pipeline
+/products/data-quality/                         @knightowl-vn/data-quality
+/.github/workflows/product-data-quality.yml     @knightowl-vn/data-quality

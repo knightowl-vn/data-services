@@ -1,0 +1,4 @@
+config:
+  data-quality:org: knightowl
+  data-quality:cpuLimit: "4"
+  data-quality:memoryLimit: 8Gi

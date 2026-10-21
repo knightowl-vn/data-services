@@ -1,0 +1,10 @@
+name: cert-manager
+category: security-compliance
+owner: "@knightowl-vn/platform"
+layer: 1
+description: Issues and renews TLS certificates in the cluster. Needed by the CNPG backup plugin.
+depends_on:
+  - platform/runtime/cluster
+outputs:
+  - namespace
+  - version

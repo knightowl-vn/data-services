@@ -1,0 +1,32 @@
+# Reusable: GitOps deploy. Validates the overlay, then (when DEPLOY_ENABLED is
+# "true") bumps image tags in it and commits. Argo CD syncs the change.
+name: deploy
+
+on:
+  workflow_call:
+    inputs:
+      overlay: {type: string, required: true, description: "e.g. products/x/deploy/overlays/dev"}
+      images: {type: string, default: "", description: "Space-separated name:tag list"}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-24.04-arm
+    permissions: {contents: write}
+    concurrency: {group: "deploy-${{ inputs.overlay }}", cancel-in-progress: false}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install kustomize
+        run: |
+          curl -sSL https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv5.6.0/kustomize_v5.6.0_linux_arm64.tar.gz \
+            | tar xz -C /usr/local/bin kustomize
+      - name: Validate overlay
+        run: kustomize build "${{ inputs.overlay }}" > /dev/null
+      - name: Bump image tags
+        if: vars.DEPLOY_ENABLED == 'true' && inputs.images != ''
+        working-directory: "${{ inputs.overlay }}"
+        run: |
+          for img in ${{ inputs.images }}; do kustomize edit set image "$img"; done
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git commit -am "deploy: ${{ inputs.overlay }} -> ${GITHUB_SHA::7}"
+          git pull --rebase origin "${GITHUB_REF_NAME}" && git push

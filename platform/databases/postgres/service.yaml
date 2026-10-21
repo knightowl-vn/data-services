@@ -1,0 +1,19 @@
+name: postgres
+category: databases
+owner: "@knightowl-vn/platform-db"
+layer: 2
+description: Shared PostgreSQL cluster on CloudNativePG. Products get their own database and role through PostgresTenant.
+depends_on:
+  - platform/runtime/cluster
+  - platform/databases/cnpg-operator
+# Stack outputs other projects may read (the contract):
+outputs:
+  - host             # primary (read-write), used by Pulumi for admin work
+  - ro_host          # replicas (read-only)
+  - app_host         # PgBouncer pooler; apps connect here
+  - port
+  - admin_user
+  - admin_password   # secret
+  - cluster_name
+  - namespace
+  - metrics_selector # pod labels for a PodMonitor (observability)
