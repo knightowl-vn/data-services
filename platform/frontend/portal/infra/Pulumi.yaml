@@ -1,0 +1,7 @@
+name: portal
+description: Portal shell for product frontends, behind oauth2-proxy
+runtime:
+  name: python
+  options:
+    toolchain: pip
+    virtualenv: venv

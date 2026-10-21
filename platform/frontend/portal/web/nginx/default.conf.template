@@ -1,0 +1,54 @@
+# Portal shell. The nginx image renders this file at start-up with envsubst
+# (only defined env vars are replaced, nginx $variables stay as they are):
+#   PORTAL_ENV      dev | staging | prod
+#   NGINX_RESOLVER  cluster DNS, e.g. kube-dns.kube-system.svc.cluster.local
+#
+# Every request has already passed oauth2-proxy (login enforced there).
+server {
+  listen 8080;
+  server_tokens off;
+  root /usr/share/nginx/html;
+  resolver ${NGINX_RESOLVER} valid=30s ipv6=off;
+
+  location = /healthz {
+    access_log off;
+    return 200 "ok\n";
+  }
+
+  # Which products are in the portal (ConfigMap, see deploy/).
+  location = /remotes.json {
+    alias /etc/portal/remotes.json;
+    default_type application/json;
+    add_header Cache-Control "no-cache";
+    include /etc/nginx/snippets/security-headers.conf;
+  }
+
+  # Product frontends and their apis, by convention, with no per-product config:
+  #   /apps/<name>/<rest>  ->  http://<name>-web.<name>-<env>.svc.cluster.local/<rest>
+  # A new product is reachable as soon as its web Service exists.
+  location ~ "^/apps/(?<app>[a-z0-9]+(-[a-z0-9]+)*)(?<rest>/.*)$" {
+    proxy_pass http://$app-web.$app-${PORTAL_ENV}.svc.cluster.local$rest$is_args$args;
+    proxy_set_header Host $app-web;
+    proxy_connect_timeout 5s;
+    proxy_read_timeout 60s;
+    # Product nginx sets caching headers; keep the security ones from here.
+    proxy_hide_header Content-Security-Policy;
+    include /etc/nginx/snippets/security-headers.conf;
+  }
+
+  location /apps/ {
+    return 404;
+  }
+
+  location /assets/ {
+    add_header Cache-Control "public, max-age=31536000, immutable";
+    include /etc/nginx/snippets/security-headers.conf;
+    try_files $uri =404;
+  }
+
+  location / {
+    add_header Cache-Control "no-cache";
+    include /etc/nginx/snippets/security-headers.conf;
+    try_files $uri /index.html;
+  }
+}

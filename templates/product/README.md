@@ -14,12 +14,17 @@ Every product follows the layout of `products/data-quality/`. To add one:
    `product-<name>.yml` and replace `data-quality` with `<name>`.
 6. Add your team to `.github/CODEOWNERS` for `/products/<name>/` and your
    workflow.
+7. Frontend: in `web/`, set the name in `vite.config.ts`
+   (`portalRemote({ name: "<name>" })`), `src/main.tsx` and
+   `public/portal.json` (roles `<name>:<role>`). Then ask the platform-frontend
+   team to add `{ "name": "<name>" }` to
+   `platform/frontend/portal/deploy/overlays/<env>/remotes.json` (once).
 
 ## Components
 
 | Folder | What | Optional |
 |---|---|---|
-| `web/` | Frontend | yes |
+| `web/` | Frontend, loaded by the portal shell (micro frontend) | yes |
 | `api/` | Backend API + `openapi.json` contract | yes |
 | `worker/` | Background jobs, consumers | yes |
 | `infra/` | Pulumi project for the product | no |
@@ -33,6 +38,16 @@ Every product follows the layout of `products/data-quality/`. To add one:
 | `public` | Other products too | Versioned paths (`/api/v1`); CI blocks breaking changes |
 
 Start `internal`. Switch to `public` when another product needs the API.
+
+## Frontend rules
+
+- The portal shell does login, layout and navigation. A product frontend
+  never implements login; it reads the user with `usePortal()`.
+- Root component: default export of `web/src/App.tsx`, routes relative.
+- Use `@knightowl-vn/ui` components and `--ko-*` tokens; own styles in CSS
+  Modules. See `libs/web/README.md`.
+- Hide actions with `RequireRole`, and check the same role in the api.
+- Call your api with `usePortal().fetch` (or `requestJson`), never absolute URLs.
 
 ## Rules
 

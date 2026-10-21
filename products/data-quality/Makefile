@@ -13,7 +13,7 @@ test-web:
 
 build:
 	docker build -t data-quality-api api
-	docker build -t data-quality-web web
+	docker build -t data-quality-web -f web/Dockerfile ../..   # repo root: needs libs/web
 
 # Regenerate the API contract (api/openapi.json) from the code.
 api:

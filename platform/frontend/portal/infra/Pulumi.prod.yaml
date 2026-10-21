@@ -1,0 +1,9 @@
+# Secret, set once per stack:
+#   pulumi config set --secret oidcClientSecret <from the identity provider>
+config:
+  portal:host: portal.knightowl.vn
+  portal:oidcIssuerUrl: https://auth.knightowl.vn/realms/knightowl
+  portal:oidcClientId: portal
+  portal:oauth2ProxyVersion: 10.7.1
+  portal:replicas: "2"
+  portal:tlsSecret: portal-tls

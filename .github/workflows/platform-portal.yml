@@ -1,0 +1,80 @@
+# Pipeline for platform/frontend/portal (the shell for product frontends).
+name: platform-portal
+
+on:
+  push:
+    branches: [main]
+    paths: ["platform/frontend/portal/**", "libs/web/**", "libs/pulumi-components/**", ".github/workflows/platform-portal.yml"]
+  pull_request:
+    branches: [main]
+    paths: ["platform/frontend/portal/**", "libs/web/**", "libs/pulumi-components/**", ".github/workflows/platform-portal.yml"]
+  workflow_dispatch:
+
+permissions: {contents: read}
+
+jobs:
+  changes:
+    runs-on: ubuntu-24.04-arm
+    permissions: {contents: read, pull-requests: read}
+    outputs:
+      web: ${{ steps.f.outputs.web }}
+      infra: ${{ steps.f.outputs.infra }}
+      deploy: ${{ steps.f.outputs.deploy }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: f
+        with:
+          filters: |
+            web:    ["platform/frontend/portal/web/**", "libs/web/**"]
+            infra:  ["platform/frontend/portal/infra/**", "libs/pulumi-components/**"]
+            deploy: ["platform/frontend/portal/deploy/**"]
+
+  web:
+    needs: changes
+    if: needs.changes.outputs.web == 'true'
+    permissions: {contents: read, packages: write}
+    uses: ./.github/workflows/_build-node.yml
+    with:
+      path: platform/frontend/portal/web
+      context: "."   # repo root: the web build installs libs/web
+      image: ghcr.io/knightowl-vn/portal-shell
+      push: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
+
+  infra-test:
+    needs: changes
+    if: needs.changes.outputs.infra == 'true'
+    runs-on: ubuntu-24.04-arm
+    defaults:
+      run: {working-directory: platform/frontend/portal/infra}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.13"}
+      - run: pip install pytest ruff
+      - run: ruff check . && ruff format --check .
+      - run: pytest -q
+
+  infra:
+    needs: [changes, infra-test]
+    if: needs.changes.outputs.infra == 'true'
+    permissions: {contents: read, pull-requests: write}
+    uses: ./.github/workflows/_pulumi.yml
+    with:
+      path: platform/frontend/portal/infra
+      stack: knightowl/portal/dev
+      command: ${{ github.event_name == 'pull_request' && 'preview' || 'up' }}
+    secrets:
+      PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+
+  deploy-dev:
+    needs: [changes, web, infra]
+    if: >-
+      always() && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') &&
+      (needs.web.result == 'success' || needs.changes.outputs.deploy == 'true')
+    permissions: {contents: write}
+    uses: ./.github/workflows/_deploy.yml
+    with:
+      overlay: platform/frontend/portal/deploy/overlays/dev
+      images: >-
+        ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && needs.web.result == 'success' && format('ghcr.io/knightowl-vn/portal-shell:{0}', github.sha) || '' }}

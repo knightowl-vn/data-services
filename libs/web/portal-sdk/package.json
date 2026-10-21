@@ -1,0 +1,41 @@
+{
+  "name": "@knightowl-vn/portal-sdk",
+  "version": "0.1.0",
+  "description": "Contract between the portal shell and product frontends: context, roles, API calls, manifest, build config.",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./vite": {
+      "types": "./vite.d.ts",
+      "default": "./vite.js"
+    }
+  },
+  "files": ["src", "!src/**/*.test.*", "vite.js", "vite.d.ts"],
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "@knightowl-vn/ui": "^0.1.0",
+    "@module-federation/vite": "^1.23.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-router": "^8.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@module-federation/vite": {"optional": true}
+  },
+  "devDependencies": {
+    "@knightowl-vn/ui": "file:../ui",
+    "@module-federation/vite": "^1.23.5",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-router": "^8.5.0",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.4",
+    "vitest": "^5.0.5"
+  }
+}

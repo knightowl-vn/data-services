@@ -5,6 +5,8 @@ on:
   workflow_call:
     inputs:
       path: {type: string, required: true}
+      # Docker build context. Web images use "." (repo root) because they install libs/web.
+      context: {type: string, default: ""}
       image: {type: string, required: true}
       node-version: {type: string, default: "22"}
       push: {type: boolean, default: false}
@@ -36,7 +38,8 @@ jobs:
       - if: inputs.push
         uses: docker/build-push-action@v6
         with:
-          context: "${{ inputs.path }}"
+          context: "${{ inputs.context || inputs.path }}"
+          file: "${{ inputs.path }}/Dockerfile"
           platforms: linux/amd64,linux/arm64
           push: true
           tags: "${{ inputs.image }}:${{ github.sha }}"

@@ -1,0 +1,11 @@
+/* Product styles: CSS Modules (class names are scoped) + tokens from @knightowl-vn/ui. */
+.form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--ko-space-3);
+  align-items: end;
+}
+
+.section + .section {
+  margin-top: var(--ko-space-5);
+}

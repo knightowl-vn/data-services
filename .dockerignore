@@ -1,0 +1,7 @@
+# Web images build from the repo root (they need libs/web). Keep the context small.
+**/node_modules
+**/dist
+**/.venv
+**/venv
+**/__pycache__
+.git

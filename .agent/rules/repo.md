@@ -18,4 +18,7 @@ Most important rules:
 - `visibility: public` APIs are versioned (`/api/v1`) and must stay backward
   compatible; run `make api` after API changes.
 - Postgres runs on CloudNativePG; apps connect via `app_host` (pooler).
+- Product frontends are micro frontends loaded by the portal shell
+  (`platform/frontend/portal`): `portalRemote()` build, `src/App.tsx` default
+  export, `public/portal.json`, `@knightowl-vn/ui`. Products never implement login.
 - Update `AGENTS.md` when structure or a decision changes.
