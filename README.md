@@ -7,7 +7,7 @@ teams build on it.
 data-services/
 ├── platform/      # shared infra by category (databases, observability, ...)
 ├── products/      # one folder per product, owned by one team
-├── libs/          # shared code (pulumi-components, ...)
+├── libs/          # shared code (pulumi-components, web: ui + portal-sdk)
 ├── templates/     # how to start a new product
 └── .github/       # CI: reusable workflows + one workflow per product, CODEOWNERS
 ```
@@ -16,7 +16,15 @@ data-services/
 |---|---|---|
 | `platform/` | Platform teams | Tools run once and shared: Postgres, Kafka, Airflow, monitoring... |
 | `products/` | Product teams | Everything for one product: `web/`, `api/`, `worker/`, `infra/`, `deploy/` |
-| `libs/` | Platform team | Components products use to get resources on the platform |
+| `libs/` | Platform team | Components products use to get resources on the platform, shared UI |
+
+## Frontends: one portal, many teams
+
+Users open one portal (`platform/frontend/portal`). It handles login, roles,
+layout and navigation, and loads each product's frontend at runtime (micro
+frontends with Module Federation). Each team builds and deploys its own
+`web/` without touching the portal or other teams. Shared look and the
+shell/product contract live in `libs/web`.
 
 ## Folders follow teams
 

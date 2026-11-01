@@ -1,0 +1,33 @@
+# Shared frontend libraries. Every product's and the portal's workflow also runs
+# on libs/web changes, so a breaking change shows up in their checks on the same PR.
+name: libs-web
+
+on:
+  push:
+    branches: [main]
+    paths: ["libs/web/**", ".github/workflows/libs-web.yml"]
+  pull_request:
+    branches: [main]
+    paths: ["libs/web/**", ".github/workflows/libs-web.yml"]
+  workflow_dispatch:
+
+permissions: {contents: read}
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04-arm
+    strategy:
+      matrix:
+        lib: [ui, portal-sdk]
+    defaults:
+      run: {working-directory: "libs/web/${{ matrix.lib }}"}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: "libs/web/${{ matrix.lib }}/package-lock.json"
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test

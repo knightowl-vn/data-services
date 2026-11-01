@@ -13,7 +13,7 @@ test-web:
 
 build:
 	docker build -t data-quality-api api
-	docker build -t data-quality-web web
+	docker build -t data-quality-web -f web/Dockerfile ../..   # repo root: needs libs/web
 
 # Regenerate the API contract (api/openapi.json) from the code.
 api:
@@ -24,8 +24,9 @@ api:
 api-check: api
 	git diff --exit-code -- api/openapi.json
 
+# No identity provider locally: every request is a dev user (DEV_ROLES=... to change roles).
 dev-api:
-	cd api && $(PY) -m uvicorn data_quality_api.main:app --reload --port 8000
+	cd api && AUTH_DISABLED=true $(PY) -m uvicorn data_quality_api.main:app --reload --port 8000
 
 dev-web:
 	cd web && npm run dev

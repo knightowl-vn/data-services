@@ -1,11 +1,15 @@
+# Build from the repo root: docker build -f products/data-quality/web/Dockerfile .
+# (the shared libs in libs/web are installed from the repo, see package.json)
 FROM node:22-alpine AS build
-WORKDIR /app
-COPY package.json package-lock.json ./
+WORKDIR /repo
+COPY libs/web/ libs/web/
+COPY products/data-quality/web/package.json products/data-quality/web/package-lock.json products/data-quality/web/.npmrc products/data-quality/web/
+WORKDIR /repo/products/data-quality/web
 RUN npm ci
-COPY . .
+COPY products/data-quality/web/ ./
 RUN npm run build
 
 FROM nginxinc/nginx-unprivileged:1.27-alpine
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-COPY --from=build /app/dist /usr/share/nginx/html
+COPY products/data-quality/web/nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=build /repo/products/data-quality/web/dist /usr/share/nginx/html
 EXPOSE 8080

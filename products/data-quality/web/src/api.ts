@@ -1,5 +1,10 @@
 // Types and calls match ../../api/openapi.json (generated from the api code).
+// Calls go through the portal's fetch: same origin, session cookie, /apps/data-quality prefix.
+import { type Fetcher, requestJson, usePortal } from "@knightowl-vn/portal-sdk";
+import { useMemo } from "react";
+
 export type Rule = "not_null" | "unique" | "row_count_min" | "freshness_hours";
+export const RULES: Rule[] = ["not_null", "unique", "row_count_min", "freshness_hours"];
 
 export interface CheckCreate {
   name: string;
@@ -21,18 +26,21 @@ export interface Run {
   created_at: string;
 }
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(path, {
-    headers: { "Content-Type": "application/json" },
-    ...init,
-  });
-  if (!res.ok) throw new Error(`${init?.method ?? "GET"} ${path} failed: ${res.status}`);
-  return res.json() as Promise<T>;
+export function createApi(fetcher: Fetcher) {
+  const post = { method: "POST" };
+  return {
+    listChecks: () => requestJson<Check[]>(fetcher, "/api/v1/checks"),
+    getCheck: (id: number) => requestJson<Check>(fetcher, `/api/v1/checks/${id}`),
+    createCheck: (body: CheckCreate) =>
+      requestJson<Check>(fetcher, "/api/v1/checks", { ...post, body: JSON.stringify(body) }),
+    runCheck: (id: number) => requestJson<Run>(fetcher, `/api/v1/checks/${id}/runs`, post),
+    listRuns: (id: number) => requestJson<Run[]>(fetcher, `/api/v1/checks/${id}/runs`),
+  };
 }
 
-export const api = {
-  listChecks: () => request<Check[]>("/api/v1/checks"),
-  createCheck: (body: CheckCreate) =>
-    request<Check>("/api/v1/checks", { method: "POST", body: JSON.stringify(body) }),
-  runCheck: (id: number) => request<Run>(`/api/v1/checks/${id}/runs`, { method: "POST" }),
-};
+export type Api = ReturnType<typeof createApi>;
+
+export function useApi(): Api {
+  const { fetch } = usePortal();
+  return useMemo(() => createApi(fetch), [fetch]);
+}

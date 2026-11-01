@@ -5,10 +5,10 @@ name: product-data-quality
 on:
   push:
     branches: [main]
-    paths: ["products/data-quality/**", "libs/pulumi-components/**", ".github/workflows/product-data-quality.yml"]
+    paths: ["products/data-quality/**", "libs/pulumi-components/**", "libs/web/**", ".github/workflows/product-data-quality.yml"]
   pull_request:
     branches: [main]
-    paths: ["products/data-quality/**", "libs/pulumi-components/**", ".github/workflows/product-data-quality.yml"]
+    paths: ["products/data-quality/**", "libs/pulumi-components/**", "libs/web/**", ".github/workflows/product-data-quality.yml"]
   workflow_dispatch:
 
 permissions: {contents: read}
@@ -33,7 +33,7 @@ jobs:
         with:
           filters: |
             api:    ["products/data-quality/api/**"]
-            web:    ["products/data-quality/web/**", "products/data-quality/api/openapi.json"]
+            web:    ["products/data-quality/web/**", "products/data-quality/api/openapi.json", "libs/web/**"]
             infra:  ["products/data-quality/infra/**", "libs/pulumi-components/**"]
             deploy: ["products/data-quality/deploy/**"]
 
@@ -82,6 +82,7 @@ jobs:
     uses: ./.github/workflows/_build-node.yml
     with:
       path: products/data-quality/web
+      context: "."   # repo root: the web build installs libs/web
       image: ghcr.io/knightowl-vn/data-quality-web
       push: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
 

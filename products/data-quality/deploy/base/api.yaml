@@ -17,6 +17,11 @@ spec:
         - name: api
           image: ghcr.io/knightowl-vn/data-quality-api
           ports: [{containerPort: 8000}]
+          env:
+            # Must match the portal's oauth2-proxy (platform/frontend/portal/infra/Pulumi.<env>.yaml):
+            # it forwards that client's ID token, which the api verifies.
+            - {name: OIDC_ISSUER_URL, value: https://auth.dev.knightowl.vn/realms/knightowl}   # set per overlay
+            - {name: OIDC_AUDIENCE, value: portal}
           envFrom:
             - secretRef: {name: data-quality-db, optional: true}   # DATABASE_URL from PostgresTenant
           readinessProbe: {httpGet: {path: /health, port: 8000}}

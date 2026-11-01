@@ -15,3 +15,9 @@
 # Products: each team owns its product folder and its pipeline
 /products/data-quality/                         @knightowl-vn/data-quality
 /.github/workflows/product-data-quality.yml     @knightowl-vn/data-quality
+
+# Frontend platform: portal shell and shared web libraries
+/platform/frontend/                             @knightowl-vn/platform-frontend
+/libs/web/                                      @knightowl-vn/platform-frontend
+/.github/workflows/platform-portal.yml          @knightowl-vn/platform-frontend
+/.github/workflows/libs-web.yml                 @knightowl-vn/platform-frontend

@@ -45,8 +45,19 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Missing or invalid token"
+          },
+          "403": {
+            "description": "Role missing"
           }
-        }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       },
       "post": {
         "summary": "Create Check",
@@ -72,6 +83,12 @@
               }
             }
           },
+          "401": {
+            "description": "Missing or invalid token"
+          },
+          "403": {
+            "description": "Role missing"
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -82,13 +99,23 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     },
     "/api/v1/checks/{check_id}": {
       "get": {
         "summary": "Get Check",
         "operationId": "get_check_api_v1_checks__check_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "check_id",
@@ -111,6 +138,12 @@
               }
             }
           },
+          "401": {
+            "description": "Missing or invalid token"
+          },
+          "403": {
+            "description": "Role missing"
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -128,6 +161,11 @@
       "post": {
         "summary": "Run Check",
         "operationId": "run_check_api_v1_checks__check_id__runs_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "check_id",
@@ -150,6 +188,12 @@
               }
             }
           },
+          "401": {
+            "description": "Missing or invalid token"
+          },
+          "403": {
+            "description": "Role missing"
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -165,6 +209,11 @@
       "get": {
         "summary": "List Runs",
         "operationId": "list_runs_api_v1_checks__check_id__runs_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "check_id",
@@ -190,6 +239,12 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Missing or invalid token"
+          },
+          "403": {
+            "description": "Role missing"
           },
           "422": {
             "description": "Validation Error",
@@ -414,6 +469,12 @@
           "type"
         ],
         "title": "ValidationError"
+      }
+    },
+    "securitySchemes": {
+      "HTTPBearer": {
+        "type": "http",
+        "scheme": "bearer"
       }
     }
   }

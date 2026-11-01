@@ -1,0 +1,120 @@
+/* Shell layout only. Prefix "shell-"; component styles come from @knightowl-vn/ui. */
+.shell {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  grid-template-rows: 56px 1fr;
+  grid-template-areas:
+    "header header"
+    "nav main";
+  min-height: 100vh;
+}
+
+.shell-header {
+  grid-area: header;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 var(--ko-space-5);
+  background: var(--ko-color-surface);
+  border-bottom: 1px solid var(--ko-color-border);
+}
+
+.shell-brand {
+  font-weight: 700;
+  font-size: var(--ko-font-size-lg);
+  color: var(--ko-color-text);
+  text-decoration: none;
+}
+
+.shell-user {
+  display: flex;
+  align-items: center;
+  gap: var(--ko-space-3);
+}
+
+.shell-nav {
+  grid-area: nav;
+  padding: var(--ko-space-4) var(--ko-space-3);
+  background: var(--ko-color-surface);
+  border-right: 1px solid var(--ko-color-border);
+}
+
+.shell-nav__group + .shell-nav__group {
+  margin-top: var(--ko-space-4);
+}
+
+.shell-nav__title {
+  padding: 0 var(--ko-space-3);
+  margin-bottom: var(--ko-space-1);
+  font-size: var(--ko-font-size-sm);
+  font-weight: 700;
+  color: var(--ko-color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.shell-nav__link {
+  display: block;
+  padding: var(--ko-space-2) var(--ko-space-3);
+  border-radius: var(--ko-radius-sm);
+  color: var(--ko-color-text);
+  text-decoration: none;
+}
+
+.shell-nav__link:hover {
+  background: var(--ko-color-bg);
+}
+
+.shell-nav__link.active {
+  background: var(--ko-color-info-bg);
+  color: var(--ko-color-primary);
+  font-weight: 600;
+}
+
+.shell-main {
+  grid-area: main;
+  padding: var(--ko-space-5) var(--ko-space-6);
+  min-width: 0;
+}
+
+.shell-apps {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--ko-space-4);
+}
+
+.shell-app-card {
+  color: inherit;
+  text-decoration: none;
+}
+
+.shell-problems {
+  margin-bottom: var(--ko-space-4);
+}
+
+.shell-toasts {
+  position: fixed;
+  right: var(--ko-space-4);
+  bottom: var(--ko-space-4);
+  display: grid;
+  gap: var(--ko-space-2);
+  max-width: 360px;
+}
+
+@media (max-width: 720px) {
+  .shell {
+    grid-template-columns: 1fr;
+    grid-template-rows: 56px auto 1fr;
+    grid-template-areas:
+      "header"
+      "nav"
+      "main";
+  }
+  .shell-nav {
+    border-right: 0;
+    border-bottom: 1px solid var(--ko-color-border);
+  }
+  .shell-main {
+    padding: var(--ko-space-4);
+  }
+}

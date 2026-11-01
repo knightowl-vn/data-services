@@ -6,6 +6,9 @@ components:
   web:
     path: web
     image: ghcr.io/knightowl-vn/data-quality-web
+    # Portal remote: the portal shell loads it at /data-quality.
+    # Title, nav and roles: web/public/portal.json (deployed with this product).
+    portal: true
   api:
     path: api
     image: ghcr.io/knightowl-vn/data-quality-api

@@ -21,7 +21,7 @@ A service may depend only on services in the same or a lower layer.
 |---|---|
 | 1 | provisioning, runtime, security-compliance |
 | 2 | databases, streaming-messaging |
-| 3 | observability, workflow-orchestration, data-catalog, cicd |
+| 3 | observability, workflow-orchestration, data-catalog, cicd, frontend |
 | 4 | bi-analytics |
 
 ## Contract

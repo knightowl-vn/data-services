@@ -1,0 +1,7 @@
+{
+  "name": "data-quality",
+  "title": "Data Quality",
+  "description": "Define data quality checks on datasets and run them.",
+  "roles": ["data-quality:viewer", "data-quality:editor"],
+  "nav": [{ "label": "Checks", "path": "" }]
+}

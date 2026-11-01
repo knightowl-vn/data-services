@@ -1,0 +1,21 @@
+name: portal
+category: frontend
+owner: "@knightowl-vn/platform-frontend"
+layer: 3
+description: >-
+  Portal shell (micro frontend host). One web entry point for every product:
+  enforces login (oauth2-proxy + OIDC), checks roles, draws layout and navigation,
+  and loads each product's frontend at runtime (Module Federation).
+depends_on:
+  - platform/runtime/cluster
+  - platform/security-compliance/cert-manager   # TLS for the portal host
+  # An OIDC identity provider (e.g. Keycloak). Not in platform/ yet; set oidcIssuerUrl.
+# Stack outputs other projects may read (the contract):
+outputs:
+  - namespace              # portal-<env>
+  - url                    # https://<portal host>
+  - oauth2_proxy_version
+# Runtime contract for products (not stack outputs), see README.md:
+#   - web Service <name>-web in namespace <name>-<env>, port 80
+#   - remoteEntry.js and portal.json at the root of that Service
+#   - built with portalRemote() from @knightowl-vn/portal-sdk/vite
