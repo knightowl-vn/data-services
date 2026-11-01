@@ -85,6 +85,10 @@ Other category folders have only a README for now.
   roles, `fetch` (to `/apps/<name>/api`), `notify`. UI from `@knightowl-vn/ui`;
   own styles CSS Modules + `--ko-*` tokens only. Registering in the portal =
   one line in `platform/frontend/portal/deploy/overlays/<env>/remotes.json`, once.
+- `api/` checks roles itself on every route: verify the ID token oauth2-proxy
+  forwards (`Authorization: Bearer`), never trust `X-Forwarded-*`. Copy
+  data-quality's `auth.py` (`require_role(...)`); deploy sets
+  `OIDC_ISSUER_URL` / `OIDC_AUDIENCE` to the portal's issuer and client id.
 - Add the team to `.github/CODEOWNERS` and create
   `.github/workflows/product-<name>.yml` (copy data-quality's).
 
@@ -148,7 +152,7 @@ Workflows: `actionlint`.
 ## Not done yet
 
 Postgres store in the data-quality API (uses in-memory store), worker
-example, identity provider (Keycloak) in `platform/`, role checks in product
-apis (verify the forwarded token), API gateway, generated API clients,
+example, identity provider (Keycloak) in `platform/`, service-to-service
+tokens for public apis, API gateway, generated API clients,
 observability stack, storage (S3/MinIO) service, CI for `platform/` (only the
 portal has a workflow).

@@ -127,7 +127,6 @@ the dev tag (`.github/workflows/platform-portal.yml`).
 ## Not done yet
 
 - Identity provider (Keycloak) is not in `platform/` yet; `oidcIssuerUrl` points to where it will be.
-- Product apis don't verify the token yet (see the data-quality README).
 - During a product's rolling deploy, a browser can get a new `remoteEntry.js`
   and an old pod's assets (404 until reload). Fix later by serving assets from
   object storage that keeps old versions.

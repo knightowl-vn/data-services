@@ -23,9 +23,10 @@ data-quality/
 ## Run locally
 
 ```bash
-# api (http://localhost:8000/docs)
+# api (http://localhost:8000/docs), no token needed: every request is a dev user
 cd api && python -m venv .venv && .venv/bin/pip install -e ".[dev]"
-.venv/bin/uvicorn data_quality_api.main:app --reload
+AUTH_DISABLED=true .venv/bin/uvicorn data_quality_api.main:app --reload
+# DEV_ROLES=data-quality:viewer to try a viewer
 
 # web, standalone with a fake user (http://localhost:5174/apps/data-quality/)
 # switch roles with ?roles=data-quality:viewer
@@ -64,7 +65,31 @@ frontend at `/data-quality/*`. The team builds and deploys it alone.
 
 UI uses `@knightowl-vn/ui` components; own styles are CSS Modules with the
 `--ko-*` tokens (`libs/web/README.md`). Only editors see "Add check" and
-"Run"; the api does not check roles yet (see below).
+"Run"; the api enforces the same rule (see Auth).
+
+## Auth
+
+The portal's oauth2-proxy forwards the user's ID token as
+`Authorization: Bearer <jwt>`. The api verifies it itself (`api/src/data_quality_api/auth.py`):
+signature against the identity provider's keys, issuer, audience, expiry. It
+never trusts `X-Forwarded-*` headers, which any pod in the cluster could send.
+
+| Route | Needs |
+|---|---|
+| `GET /api/v1/...` | `data-quality:viewer` or `data-quality:editor` |
+| `POST /api/v1/...` | `data-quality:editor` |
+| `/health` | nothing |
+
+No token or a bad one → 401 (the shell sends the user to log in); missing
+role → 403; identity provider unreachable → 503.
+
+| Env var | Value |
+|---|---|
+| `OIDC_ISSUER_URL` | Same as the portal's `oidcIssuerUrl` (set per overlay) |
+| `OIDC_AUDIENCE` | The portal's `oidcClientId` (`portal`) |
+| `OIDC_JWKS_URL` | Optional; default comes from the issuer's discovery document |
+| `OIDC_GROUPS_CLAIM` | Optional; default `groups` |
+| `AUTH_DISABLED` | `true` for local dev only. The api refuses to start without OIDC config otherwise. |
 
 ## How it uses the platform
 
@@ -90,8 +115,6 @@ UI uses `@knightowl-vn/ui` components; own styles are CSS Modules with the
   `DATABASE_URL` and `api/migrations/`.
 - Running checks: runs are queued only. Add a `worker/` component
   (or an Airflow DAG) that executes them.
-- The api does not check the user's roles yet. Login is enforced by the
-  portal, and the api receives `Authorization: Bearer <token>` and
-  `X-Forwarded-Groups`; next step is to verify the token and require
-  `data-quality:editor` for writes.
+- Other products calling this api need a token too (service-to-service
+  tokens, e.g. client credentials, once the identity provider exists).
 - No generated clients for other products to call the API.

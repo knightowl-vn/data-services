@@ -12,3 +12,9 @@ images:
     newTag: latest
   - name: ghcr.io/knightowl-vn/data-quality-web
     newTag: latest
+patches:
+  - target: {kind: Deployment, name: data-quality-api}
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/env/0/value
+        value: https://auth.knightowl.vn/realms/knightowl
